@@ -7,7 +7,7 @@ The application is written in Java and Spring framework.  The following should b
 
 * Java 17
 * Maven 3.9.4
-* Git 2.42
+* Git 2.42 or higher
 
 ## Build ##
 
