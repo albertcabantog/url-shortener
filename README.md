@@ -17,7 +17,6 @@ The application is written in Java and Spring framework.  The following should b
 git clone https://github.com/albertcabantog/url-shortener.git
 ```
 
-
 * Run Maven inside the url-shortener directory to build the application without executing the unit tests
 
 ```
@@ -33,33 +32,26 @@ All unit test will be executed and the subsequent report will be generated.  Her
 
 ## Deployment ##
 
-The deployment of the application allows access to the web service APIs.  Below are the steps to deploy and run the application:
+The deployment of the application allows access to the web service APIs.  
+Below are the steps to deploy and run the application:
 
 * Run `mvn spring-boot:run`
 * Open a browser and load `http://localhost:8080/swagger-ui.html`
 
 ## Try the REST service ##
 
-Loading the swagger UI page will list all the REST service operations.  It documents each of the API including the error messages and code, allowed data entry, required parameters, description of the operation, and allows for the actual call to the REST service.
+Loading the swagger UI page will list all the REST service operations.  
+It documents each of the API including the error messages and code, allowed data entry, required parameters, 
+description of the operation, and allows for the actual call to the REST service.
 
-Let's try `/api/url/shorten` by clicking on the POST button.  Click on the `Try it out!` button.  This will send the request to the server and return the response.  Under the `Response Body` it will display the shorten URL.
+Let's try `/api/url/` by clicking on the POST button.  
+Click on the `Try it out!` button and enter the URL to generate a shorten URL code.  
+Click on the `Execute` button, this will send the request to the server and return the response.  
+Under the `Response Body` it will display the shorten URL.
 
-## Accessing in-memory database ##
+## In-memory database and performance ##
 
-The application is using an embedded in-memory H2 database to store the addressbook, contact, and phone numbers.  This database is refreshed every time the application is started and all data will be lost once the application is stopped.
+The application is using an embedded in-memory H2 database to store the shorten URL code and the original URL.  
+This database is refreshed every time the application is started and all data will be lost once the application is stopped.
 
-The database can be accessed thru the URL `http://localhost:8080/h2`.  The following details are used to open the console:
-
-* Saved Settings: Generic H2 (Embedded)
-* Driver Class:	org.h2.Driver
-* JDBC URL:	jdbc:h2:mem:testdb
-* User Name: sa
-* Password:	<leave this blank>
-
-The web console is fully functional and can execute select, insert, update, delete statements.
-
-## Assumptions ##
-* Addressbook name is unique and case sensitive
-* Contact names are unique  and case sensitive for each addressbook
-* Phone numbers are unique for each contact
-* Each contact can have multiple phone numbers
+The application is also equipped with caching mechanism to improve performance and reduce the latency on calling the database.

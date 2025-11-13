@@ -2,6 +2,7 @@ package com.mycompany.app.controller;
 
 import com.mycompany.app.domain.ShortenUrl;
 import com.mycompany.app.exception.InvalidUrlException;
+import com.mycompany.app.exception.ShortenUrlExistsException;
 import com.mycompany.app.service.URLShortenerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,18 +37,20 @@ public class URLShortenerControllerTest {
 
     @Test
     void givenShortenUrl_whenGettingAnExistingUrl_shouldReturnOk() throws Exception {
+        var shortenUrlCode = "test-shorten-url";
+        var longUrl = "this-is-a-long-url";
         ShortenUrl shortenUrl = ShortenUrl.builder()
                 .id(1L)
-                .shortenUrl("test-shorten-url")
-                .longUrl("this-is-a-long-url")
+                .shortenUrl(shortenUrlCode)
+                .longUrl(longUrl)
                 .build();
 
-        when(shortenerService.getShortenUrl("test-shorten-url")).thenReturn(shortenUrl);
+        when(shortenerService.getShortenUrl(shortenUrlCode)).thenReturn(shortenUrl);
 
         mockMvc.perform(get("/api/urls/test-shorten-url"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.shortenUrl").value("test-shorten-url"))
-                .andExpect(jsonPath("$.longUrl").value("this-is-a-long-url"));
+                .andExpect(jsonPath("$.shortenUrl").value(shortenUrlCode))
+                .andExpect(jsonPath("$.longUrl").value(longUrl));
     }
 
     @Test
@@ -67,5 +70,16 @@ public class URLShortenerControllerTest {
         mockMvc.perform(post("/api/urls").param("longUrl", invalidUrl))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(InvalidUrlException.class, result.getResolvedException()));
+    }
+
+    @Test
+    void givenUrl_whenShortenUrlHasDifferentOriginalUrl_shouldThrowShortenUrlExistsException() throws Exception {
+        String newUrl = "https://wwww.mycompany.url";
+        when(shortenerService.createShortenUrl(newUrl))
+                .thenThrow(ShortenUrlExistsException.class);
+
+        mockMvc.perform(post("/api/urls").param("longUrl", newUrl))
+                .andExpect(status().isInternalServerError())
+                .andExpect(result -> assertInstanceOf(ShortenUrlExistsException.class, result.getResolvedException()));
     }
 }

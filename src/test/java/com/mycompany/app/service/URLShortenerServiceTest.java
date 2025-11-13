@@ -3,7 +3,7 @@ package com.mycompany.app.service;
 import com.mycompany.app.domain.ShortenUrl;
 import com.mycompany.app.exception.InvalidUrlException;
 import com.mycompany.app.exception.ShortenUrlExistsException;
-import com.mycompany.app.repository.DataRepository;
+import com.mycompany.app.repository.ShortenUrlRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,25 +27,22 @@ class URLShortenerServiceTest {
     private CacheManager cacheManager;
 
     @MockitoBean
-    private DataRepository dataRepository;
+    private ShortenUrlRepository shortenUrlRepository;
 
     @MockitoBean
     private ShortUrlCodeGeneratorService urlCodeGeneratorService;
-
-    @MockitoBean
-    private URLValidatorService urlValidatorService;
 
     @Test
     void whenInvalidUrl_thenRaiseInvalidUrlException() {
         var invalidUrl = "https ://www.yourcompany.com/very/  long/url";
 
-        when(urlValidatorService.checkUrlFormat(invalidUrl)).thenReturn(false);
+        when(urlCodeGeneratorService.checkUrlFormat(invalidUrl)).thenReturn(false);
 
         assertThrowsExactly(InvalidUrlException.class, () -> {
             Optional<ShortenUrl> result = shortenerService.createShortenUrl(invalidUrl);
         });
 
-        verify(urlValidatorService, times(1)).checkUrlFormat(invalidUrl);
+        verify(urlCodeGeneratorService, times(1)).checkUrlFormat(invalidUrl);
     }
 
     @Test
@@ -58,19 +55,19 @@ class URLShortenerServiceTest {
                 .longUrl(originalLongUrl)
                 .build();
 
-        when(urlValidatorService.checkUrlFormat(newLongUrl)).thenReturn(true);
-        when(dataRepository.findByLongUrl(newLongUrl)).thenReturn(null);
-        when(urlCodeGeneratorService.generateUniqueCode(newLongUrl)).thenReturn(expectedShortenUrl);
-        when(dataRepository.findByShortenUrl(expectedShortenUrl)).thenReturn(savedShortenUrl);
+        when(urlCodeGeneratorService.checkUrlFormat(newLongUrl)).thenReturn(true);
+        when(shortenUrlRepository.findByLongUrl(newLongUrl)).thenReturn(null);
+        when(urlCodeGeneratorService.generateUniqueCode()).thenReturn(expectedShortenUrl);
+        when(shortenUrlRepository.findByShortenUrl(expectedShortenUrl)).thenReturn(savedShortenUrl);
 
         assertThrowsExactly(ShortenUrlExistsException.class, () -> {
             Optional<ShortenUrl> result = shortenerService.createShortenUrl(newLongUrl);
         });
 
-        verify(urlValidatorService, times(1)).checkUrlFormat(newLongUrl);
-        verify(dataRepository, times(1)).findByLongUrl(newLongUrl);
-        verify(urlCodeGeneratorService, times(1)).generateUniqueCode(newLongUrl);
-        verify(dataRepository, times(1)).findByShortenUrl(expectedShortenUrl);
+        verify(urlCodeGeneratorService, times(1)).checkUrlFormat(newLongUrl);
+        verify(shortenUrlRepository, times(1)).findByLongUrl(newLongUrl);
+        verify(urlCodeGeneratorService, times(1)).generateUniqueCode();
+        verify(shortenUrlRepository, times(1)).findByShortenUrl(expectedShortenUrl);
     }
 
     @Test
@@ -82,13 +79,13 @@ class URLShortenerServiceTest {
                 .longUrl(originalLongUrl)
                 .build();
 
-        when(urlValidatorService.checkUrlFormat(originalLongUrl)).thenReturn(true);
-        when(urlCodeGeneratorService.generateUniqueCode(originalLongUrl)).thenReturn(expectedShortenUrl);
-        when(dataRepository.save(any(ShortenUrl.class))).thenReturn(savedShortenUrl);
+        when(urlCodeGeneratorService.checkUrlFormat(originalLongUrl)).thenReturn(true);
+        when(urlCodeGeneratorService.generateUniqueCode()).thenReturn(expectedShortenUrl);
+        when(shortenUrlRepository.save(any(ShortenUrl.class))).thenReturn(savedShortenUrl);
 
         Optional<ShortenUrl> result = shortenerService.createShortenUrl(originalLongUrl);
 
-        verify(dataRepository, times(1)).save(any(ShortenUrl.class));
+        verify(shortenUrlRepository, times(1)).save(any(ShortenUrl.class));
         assertThat(result.get().getShortenUrl()).isEqualTo(expectedShortenUrl);
 
         ShortenUrl cachedUrl = cacheManager.getCache("shortenUrls").get(expectedShortenUrl, ShortenUrl.class);
@@ -106,11 +103,11 @@ class URLShortenerServiceTest {
 
         cacheManager.getCache("shortenUrls").put(shortenUrlCode, savedShortenUrl);
 
-        when(dataRepository.findByShortenUrl(shortenUrlCode)).thenReturn(savedShortenUrl);
+        when(shortenUrlRepository.findByShortenUrl(shortenUrlCode)).thenReturn(savedShortenUrl);
 
         var result = shortenerService.getShortenUrl(shortenUrlCode);
 
-        verify(dataRepository, never()).findByShortenUrl(shortenUrlCode);
+        verify(shortenUrlRepository, never()).findByShortenUrl(shortenUrlCode);
         assertThat(result.getLongUrl()).isSameAs(expectedOriginalUrl);
     }
 }

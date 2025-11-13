@@ -3,6 +3,8 @@ package com.mycompany.app.controller;
 import com.mycompany.app.domain.ShortenUrl;
 import com.mycompany.app.service.URLShortenerService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,10 @@ public class URLShortenerController {
     private URLShortenerService shortenerService;
 
     @Operation(description = "Get the shortened URL")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "404", description = "Short URL code not found")
+    })
     @GetMapping("/{shortenUrl}")
     public ResponseEntity<ShortenUrl> getShortenUrl(@PathVariable String shortenUrl) {
         var url = shortenerService.getShortenUrl(shortenUrl);
@@ -32,6 +38,13 @@ public class URLShortenerController {
     }
 
     @Operation(description = "Generate the shorten URL")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "400", description = "Invalid URL format"),
+            @ApiResponse(responseCode = "500",
+                    description = "Server encountered an error when retrieving intended URL"
+            )
+    })
     @PostMapping
     public ResponseEntity<ShortenUrl> createShortenUrl(@RequestParam String longUrl) throws Exception {
         Optional<ShortenUrl> shortenUrl = shortenerService.createShortenUrl(longUrl);
