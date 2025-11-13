@@ -1,12 +1,15 @@
-package com.mycompany.app.util;
+package com.mycompany.app.service;
+
+import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-public class SystemUtils {
+@Service
+public class URLValidatorService {
 
-    public static boolean isValidUrl(String url) {
+    public boolean checkUrlFormat(String url) {
         try {
             new URL(url).toURI();
             return true;
@@ -14,5 +17,4 @@ public class SystemUtils {
             return false;
         }
     }
-
 }

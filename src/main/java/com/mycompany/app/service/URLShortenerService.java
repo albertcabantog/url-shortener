@@ -1,53 +1,61 @@
 package com.mycompany.app.service;
 
 import com.mycompany.app.domain.ShortenUrl;
+import com.mycompany.app.exception.InvalidUrlException;
 import com.mycompany.app.exception.ShortenUrlExistsException;
 import com.mycompany.app.repository.DataRepository;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class URLShortenerService {
     private final DataRepository dataRepository;
+    private final URLValidatorService urlValidatorService;
+    private final ShortUrlCodeGeneratorService shortUrlCodeGeneratorService;
 
-    public URLShortenerService(DataRepository dataRepository) {
+    public URLShortenerService(DataRepository dataRepository, URLValidatorService urlValidatorService, ShortUrlCodeGeneratorService shortUrlCodeGeneratorService) {
         this.dataRepository = dataRepository;
+        this.urlValidatorService = urlValidatorService;
+        this.shortUrlCodeGeneratorService = shortUrlCodeGeneratorService;
     }
 
+    @Cacheable(value = "shortenUrls", key = "#shortenUrl")
     public ShortenUrl getShortenUrl(String shortenUrl) {
         return dataRepository.findByShortenUrl(shortenUrl);
     }
 
+    @CachePut(value = "shortenUrls", key = "#result.shortenUrl")
     public Optional<ShortenUrl> createShortenUrl(String originalUrl) {
-        boolean checkUrl = true;
-        if (checkUrl) {
-            throw new IllegalArgumentException("URL format is invalid");
+        boolean checkUrl = urlValidatorService.checkUrlFormat(originalUrl);
+        if (! checkUrl) {
+            throw new InvalidUrlException();
         }
 
-        ShortenUrl sUrl = dataRepository.findByLongUrl(originalUrl);
-        if (ObjectUtils.isNotEmpty(sUrl)) {
-            return Optional.of(sUrl);
+        var shortenUrl = dataRepository.findByLongUrl(originalUrl);
+        if (ObjectUtils.isNotEmpty(shortenUrl)) {
+            return Optional.of(shortenUrl);
         }
 
-        String shortenUrl = UUID.randomUUID().toString().substring(0, 6);
-        sUrl = dataRepository.findByShortenUrl(shortenUrl);
-        if (ObjectUtils.isNotEmpty(sUrl)) {
-            if (sUrl.getLongUrl().equals(originalUrl)) {
-                return Optional.of(sUrl);
+        var shortenUrlCode = shortUrlCodeGeneratorService.generateUniqueCode(originalUrl);
+        shortenUrl = dataRepository.findByShortenUrl(shortenUrlCode);
+        if (ObjectUtils.isNotEmpty(shortenUrl)) {
+            if (shortenUrl.getLongUrl().equals(originalUrl)) {
+                return Optional.of(shortenUrl);
             }
             throw new ShortenUrlExistsException();
         }
 
-        sUrl = ShortenUrl.builder()
+        shortenUrl = ShortenUrl.builder()
                 .longUrl(originalUrl)
-                .shortenUrl(shortenUrl)
+                .shortenUrl(shortenUrlCode)
                 .build();
 
-        dataRepository.save(sUrl);
+        dataRepository.save(shortenUrl);
 
-        return Optional.of(sUrl);
+        return Optional.of(shortenUrl);
     }
 }

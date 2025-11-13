@@ -1,13 +1,17 @@
 package com.mycompany.app.controller;
 
-import com.mycompany.app.repository.DataRepository;
 import com.mycompany.app.domain.ShortenUrl;
 import com.mycompany.app.service.URLShortenerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
@@ -22,7 +26,7 @@ public class URLShortenerController {
     @Operation(description = "Get the shortened URL")
     @GetMapping("/{shortenUrl}")
     public ResponseEntity<ShortenUrl> getShortenUrl(@PathVariable String shortenUrl) {
-        ShortenUrl url = shortenerService.getShortenUrl(shortenUrl);
+        var url = shortenerService.getShortenUrl(shortenUrl);
         return Optional.ofNullable(url).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
