@@ -49,9 +49,12 @@ Click on the `Try it out!` button and enter the URL to generate a shorten URL co
 Click on the `Execute` button, this will send the request to the server and return the response.  
 Under the `Response Body` it will display the shorten URL.
 
+After generating a shortened URL, this can be used to redirect to the original URL.  Open a new browser tab and use the
+shortened URL code in this format `http://localhost:8080/<shortened-url-goes-here>`
+
 ## In-memory database and performance ##
 
 The application is using an embedded in-memory H2 database to store the shorten URL code and the original URL.  
 This database is refreshed every time the application is started and all data will be lost once the application is stopped.
 
-The application is also equipped with caching mechanism to improve performance and reduce the latency on calling the database.
+The application is also equipped with caching mechanism to improve performance and reduce the latency calling the database.
